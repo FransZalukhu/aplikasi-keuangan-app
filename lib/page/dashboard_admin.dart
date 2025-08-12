@@ -7,6 +7,7 @@ import 'update_password_page.dart';
 import 'lihat_data_transaksi.dart';
 import 'input_data_transaksi.dart';
 import 'monitoring_page.dart';
+import 'cetak_laporan_page.dart';
 import 'login_page.dart';
 
 class AdminDashboardPage extends StatefulWidget {
@@ -90,6 +91,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         const InputDataTransaksiPage(),
       ),
       _MenuItem(Icons.bar_chart, 'Monitoring / Grafik', const MonitoringPage()),
+      _MenuItem(Icons.print, 'Cetak Laporan', const CetakLaporanPage()),
     ];
 
     return Scaffold(

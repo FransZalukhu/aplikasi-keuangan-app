@@ -47,7 +47,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     try {
-      // Siapkan data sebagai JSON
       final requestData = {
         'nama_user': namaController.text.trim(),
         'level': level ?? '',
@@ -55,24 +54,22 @@ class _RegisterPageState extends State<RegisterPage> {
         'password': passwordController.text.trim(),
       };
 
-      print('Sending registration data: $requestData'); // Debug log
+      print('Sending registration data: $requestData');
 
       final response = await http
           .post(
             url,
             headers: {
-              'Content-Type':
-                  'application/json', // <-- PENTING: Set content type
-              'ngrok-skip-browser-warning': 'true', // Untuk ngrok
+              'Content-Type': 'application/json',
+              'ngrok-skip-browser-warning': 'true',
             },
-            body: json.encode(requestData), // <-- Encode sebagai JSON string
+            body: json.encode(requestData),
           )
           .timeout(const Duration(seconds: 30));
 
       print('Response Status Code: ${response.statusCode}');
       print('Response Body: ${response.body}');
 
-      // Cek jika response body kosong
       if (response.body.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Server tidak memberikan response')),
@@ -82,9 +79,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
       final data = json.decode(response.body);
 
-      // Cek berbagai status code
       if (response.statusCode == 201 && data['status'] == 'success') {
-        // Registrasi berhasil (201 Created)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'] ?? 'Registrasi berhasil')),
         );
@@ -93,19 +88,16 @@ class _RegisterPageState extends State<RegisterPage> {
           MaterialPageRoute(builder: (_) => const LoginPage()),
         );
       } else if (response.statusCode == 409) {
-        // Username sudah digunakan (409 Conflict)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(data['message'] ?? 'Username sudah digunakan'),
           ),
         );
       } else if (response.statusCode == 400) {
-        // Bad Request - field wajib tidak diisi
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'] ?? 'Data tidak valid')),
         );
       } else {
-        // Error lainnya
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'] ?? 'Registrasi gagal')),
         );

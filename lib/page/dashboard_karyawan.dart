@@ -77,9 +77,7 @@ class _KaryawanDashboardPageState extends State<KaryawanDashboardPage> {
                     context,
                     MaterialPageRoute(builder: (_) => item.page!),
                   );
-                } else {
-                  // TODO: Implement navigasi menu lain jika ada
-                }
+                } else {}
               },
               borderRadius: BorderRadius.circular(16),
               child: Card(
