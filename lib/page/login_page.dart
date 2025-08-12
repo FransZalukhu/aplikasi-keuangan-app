@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'register_page.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard_admin.dart';
+import 'dashboard_karyawan.dart';
+import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,12 +18,71 @@ class _LoginPageState extends State<LoginPage> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
-  void _goToDashboard() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final url = Uri.parse(
+      'https://c42716d6d506.ngrok-free.app/BackendApliksiKeuangan/api/Auth.php',
     );
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'username': usernameController.text.trim(),
+          'password': passwordController.text.trim(),
+        }),
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['status'] == 'success') {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', data['token']);
+        await prefs.setInt(
+          'id_user',
+          data['user']['id_user'],
+        ); // simpan id_user
+        await prefs.setString('username', data['user']['username']);
+        await prefs.setString('level', data['user']['level']);
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Login berhasil')));
+
+        // Cek level user dan arahkan ke dashboard yang sesuai
+        if (data['user']['level'] == 'Admin') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
+          );
+        } else if (data['user']['level'] == 'Karyawan') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const KaryawanDashboardPage()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Level user tidak dikenali')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Login gagal')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Terjadi kesalahan: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -36,31 +99,17 @@ class _LoginPageState extends State<LoginPage> {
                 Icon(
                   Icons.account_balance_wallet,
                   size: 60,
-                  color: Theme.of(context).primaryColor,
+                  color: Colors.teal,
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  'Selamat Datang',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
                 TextFormField(
                   controller: usernameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Username',
-                    prefixIcon: const Icon(Icons.person_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
+                    prefixIcon: Icon(Icons.person_outline, color: Colors.teal),
                   ),
-                  validator: (value) => value?.trim().isEmpty ?? true
-                      ? 'Masukkan username'
-                      : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Masukkan username' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -68,46 +117,35 @@ class _LoginPageState extends State<LoginPage> {
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: Colors.teal,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility
                             : Icons.visibility_off,
+                        color: Colors.teal,
                       ),
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
                   ),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) return 'Masukkan password';
-                    if (value!.length < 6) return 'Password minimal 6 karakter';
-                    return null;
-                  },
+                  validator: (value) =>
+                      value!.length < 6 ? 'Password minimal 6 karakter' : null,
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      _goToDashboard();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  child: const Text('Masuk', style: TextStyle(fontSize: 16)),
-                ),
-                const SizedBox(height: 16),
+                _isLoading
+                    ? const CircularProgressIndicator(color: Colors.teal)
+                    : ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        onPressed: _login,
+                        child: const Text('Masuk'),
+                      ),
                 TextButton(
                   onPressed: () {
                     Navigator.push(
@@ -115,9 +153,9 @@ class _LoginPageState extends State<LoginPage> {
                       MaterialPageRoute(builder: (_) => const RegisterPage()),
                     );
                   },
-                  child: Text(
+                  child: const Text(
                     'Belum punya akun? Daftar',
-                    style: TextStyle(color: Theme.of(context).primaryColor),
+                    style: TextStyle(color: Colors.teal),
                   ),
                 ),
               ],

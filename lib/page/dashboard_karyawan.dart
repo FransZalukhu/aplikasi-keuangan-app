@@ -1,13 +1,47 @@
+import 'package:aplikasi_keuangan/page/lihat_data_transaksi.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'update_password_page.dart';
+import 'input_data_transaksi.dart';
+import 'login_page.dart';
 
-class KaryawanDashboardPage extends StatelessWidget {
+class KaryawanDashboardPage extends StatefulWidget {
   const KaryawanDashboardPage({super.key});
+
+  @override
+  State<KaryawanDashboardPage> createState() => _KaryawanDashboardPageState();
+}
+
+class _KaryawanDashboardPageState extends State<KaryawanDashboardPage> {
+  Future<void> _logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final List<_MenuItem> menuItems = [
-      _MenuItem(Icons.lock_reset, 'Update Password'),
-      _MenuItem(Icons.add_circle_outline, 'Input Data Transaksi'),
+      _MenuItem(
+        Icons.lock_reset,
+        'Update Password',
+        const UpdatePasswordPage(),
+      ),
+      _MenuItem(
+        Icons.add_circle_outline,
+        'Input Data Transaksi',
+        const InputDataTransaksiPage(),
+      ),
+      _MenuItem(
+        Icons.add_circle_outline,
+        'Lihat Data Transaksi',
+        const LihatDataTransaksiPage(),
+      ),
     ];
 
     return Scaffold(
@@ -16,6 +50,13 @@ class KaryawanDashboardPage extends StatelessWidget {
         title: const Text('Dashboard Karyawan'),
         centerTitle: true,
         backgroundColor: Colors.teal,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () => _logout(context),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -31,7 +72,14 @@ class KaryawanDashboardPage extends StatelessWidget {
             final item = menuItems[index];
             return InkWell(
               onTap: () {
-                // Nanti tambahkan navigasi sesuai menu
+                if (item.page != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => item.page!),
+                  );
+                } else {
+                  // TODO: Implement navigasi menu lain jika ada
+                }
               },
               borderRadius: BorderRadius.circular(16),
               child: Card(
@@ -78,6 +126,7 @@ class KaryawanDashboardPage extends StatelessWidget {
 class _MenuItem {
   final IconData icon;
   final String title;
+  final Widget? page;
 
-  _MenuItem(this.icon, this.title);
+  _MenuItem(this.icon, this.title, this.page);
 }

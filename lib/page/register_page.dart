@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -18,11 +22,114 @@ class _RegisterPageState extends State<RegisterPage> {
   String? level;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     level = _levelOptions.first;
+  }
+
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (passwordController.text != confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Konfirmasi password tidak cocok')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final url = Uri.parse(
+      'https://c42716d6d506.ngrok-free.app/BackendApliksiKeuangan/api/users.php',
+    );
+
+    try {
+      // Siapkan data sebagai JSON
+      final requestData = {
+        'nama_user': namaController.text.trim(),
+        'level': level ?? '',
+        'username': usernameController.text.trim(),
+        'password': passwordController.text.trim(),
+      };
+
+      print('Sending registration data: $requestData'); // Debug log
+
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type':
+                  'application/json', // <-- PENTING: Set content type
+              'ngrok-skip-browser-warning': 'true', // Untuk ngrok
+            },
+            body: json.encode(requestData), // <-- Encode sebagai JSON string
+          )
+          .timeout(const Duration(seconds: 30));
+
+      print('Response Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
+      // Cek jika response body kosong
+      if (response.body.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Server tidak memberikan response')),
+        );
+        return;
+      }
+
+      final data = json.decode(response.body);
+
+      // Cek berbagai status code
+      if (response.statusCode == 201 && data['status'] == 'success') {
+        // Registrasi berhasil (201 Created)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Registrasi berhasil')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
+      } else if (response.statusCode == 409) {
+        // Username sudah digunakan (409 Conflict)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'] ?? 'Username sudah digunakan'),
+          ),
+        );
+      } else if (response.statusCode == 400) {
+        // Bad Request - field wajib tidak diisi
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Data tidak valid')),
+        );
+      } else {
+        // Error lainnya
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Registrasi gagal')),
+        );
+      }
+    } on TimeoutException catch (e) {
+      print('Timeout error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Request timeout. Periksa koneksi internet.'),
+        ),
+      );
+    } on FormatException catch (e) {
+      print('JSON Format error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Response server tidak valid')),
+      );
+    } catch (e) {
+      print('Registration error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -32,6 +139,7 @@ class _RegisterPageState extends State<RegisterPage> {
         title: const Text('Daftar'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: Colors.teal.shade700),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -41,6 +149,19 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                ShaderMask(
+                  shaderCallback: (bounds) => LinearGradient(
+                    colors: [Colors.teal.shade300, Colors.teal.shade700],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: const Icon(
+                    Icons.person_add_alt_1,
+                    size: 70,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Text(
                   'Buat Akun',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -60,6 +181,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     filled: true,
                     fillColor: Colors.grey[100],
                   ),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Masukkan nama lengkap' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -73,6 +196,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     filled: true,
                     fillColor: Colors.grey[100],
                   ),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Masukkan username' : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
@@ -118,6 +243,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     filled: true,
                     fillColor: Colors.grey[100],
                   ),
+                  validator: (value) =>
+                      value!.length < 6 ? 'Minimal 6 karakter' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -143,24 +270,37 @@ class _RegisterPageState extends State<RegisterPage> {
                     filled: true,
                     fillColor: Colors.grey[100],
                   ),
+                  validator: (value) =>
+                      value!.length < 6 ? 'Minimal 6 karakter' : null,
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    // Example
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Tombol daftar ditekan')),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Container(
+                  width: double.infinity,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [Colors.teal.shade300, Colors.teal.shade700],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: const Text('Daftar', style: TextStyle(fontSize: 16)),
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _register,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Daftar',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                  ),
                 ),
               ],
             ),
