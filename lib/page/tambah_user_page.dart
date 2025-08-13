@@ -51,7 +51,7 @@ class _TambahUserPageState extends State<TambahUserPage> {
     setState(() => _isLoading = true);
 
     final url = Uri.parse(
-      'https://c42716d6d506.ngrok-free.app/BackendApliksiKeuangan/api/users.php',
+      'https://fa27f666e9d0.ngrok-free.app/BackendApliksiKeuangan/api/users.php',
     );
 
     try {
@@ -159,6 +159,7 @@ class _TambahUserPageState extends State<TambahUserPage> {
                   : ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       icon: const Icon(Icons.save),

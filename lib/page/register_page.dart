@@ -43,7 +43,7 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     final url = Uri.parse(
-      'https://c42716d6d506.ngrok-free.app/BackendApliksiKeuangan/api/users.php',
+      'https://fa27f666e9d0.ngrok-free.app/BackendApliksiKeuangan/api/users.php',
     );
 
     try {

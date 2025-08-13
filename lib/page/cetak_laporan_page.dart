@@ -20,7 +20,7 @@ class _CetakLaporanPageState extends State<CetakLaporanPage> {
   bool isPrinting = false;
   DateTimeRange? dateRange;
   final String apiUrl =
-      'https://c42716d6d506.ngrok-free.app/BackendApliksiKeuangan/api/transactions.php/report';
+      'https://fa27f666e9d0.ngrok-free.app/BackendApliksiKeuangan/api/transactions.php/report';
 
   @override
   void initState() {

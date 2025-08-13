@@ -40,7 +40,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       final token = prefs.getString('token');
 
       final url = Uri.parse(
-        'https://c42716d6d506.ngrok-free.app/BackendApliksiKeuangan/api/transactions.php/dashboard',
+        'https://fa27f666e9d0.ngrok-free.app/BackendApliksiKeuangan/api/transactions.php/dashboard',
       );
 
       final response = await http.get(

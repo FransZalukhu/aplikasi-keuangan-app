@@ -26,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     final url = Uri.parse(
-      'https://c42716d6d506.ngrok-free.app/BackendApliksiKeuangan/api/Auth.php',
+      'https://fa27f666e9d0.ngrok-free.app/BackendApliksiKeuangan/api/Auth.php',
     );
 
     try {
@@ -141,6 +141,7 @@ class _LoginPageState extends State<LoginPage> {
                     : ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.teal,
+                          foregroundColor: Colors.white,
                           minimumSize: const Size(double.infinity, 50),
                         ),
                         onPressed: _login,

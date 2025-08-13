@@ -61,7 +61,7 @@ class _InputDataTransaksiPageState extends State<InputDataTransaksiPage> {
     setState(() => isLoading = true);
 
     final url = Uri.parse(
-      'https://c42716d6d506.ngrok-free.app/BackendApliksiKeuangan/api/transactions.php',
+      'https://fa27f666e9d0.ngrok-free.app/BackendApliksiKeuangan/api/transactions.php',
     );
 
     try {
@@ -85,7 +85,7 @@ class _InputDataTransaksiPageState extends State<InputDataTransaksiPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Transaksi berhasil ditambahkan')),
         );
-        Navigator.pop(context, true); // kembali dengan status sukses
+        Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
